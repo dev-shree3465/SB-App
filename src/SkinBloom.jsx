@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, Filter, SortDesc, Sparkles } from 'lucide-react';
+import { X, Filter, SortDesc, Sparkles, Lock } from 'lucide-react';
 
 import { Navbar } from './components/layout/Navbar';
 import { MobileNav } from './components/layout/MobileNav';
@@ -32,6 +32,7 @@ const SkinBloom = () => {
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [sortOrder, setSortOrder] = useState('LATEST');
 
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [notification, setNotification] = useState(null);
@@ -51,6 +52,7 @@ const SkinBloom = () => {
 
   const handleAuthComplete = (userData, isSignup = false) => {
     setUser(userData);
+    setShowAuthModal(false)
 
     const allProfiles = JSON.parse(localStorage.getItem(`skinbloom_all_profiles`) || "{}");
     const userProfile = allProfiles[userData.email];
@@ -91,7 +93,6 @@ const SkinBloom = () => {
     return user?.age || 0;
   };
 
-  // UPDATED: Accepts the quizData object (skinType, age, birthYear)
   const handleQuizComplete = (quizData) => {
     const newProfile = {
       type: quizData.skinType,
@@ -144,7 +145,16 @@ const SkinBloom = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 font-sans pb-24 text-slate-900 relative">
+    <div className="min-h-screen bg-slate-50 font-sans-serif pb-24 text-slate-900 relative">
+
+      {/* AUTH MODAL - Only shows when triggered */}
+      {showAuthModal && (
+        <div className="fixed inset-0 z-[600]">
+          <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setShowAuthModal(false)} />
+          <AuthLogic onLogin={handleAuthComplete} notify={notify} onClose={() => setShowAuthModal(false)} />
+        </div>
+      )}
+
       {showSuccessPopup && (
         <div className="fixed inset-0 z-[500] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-md">
           <div className="bg-white w-full max-w-xs rounded-[2.5rem] p-8 text-center animate-in zoom-in duration-300">
@@ -173,32 +183,47 @@ const SkinBloom = () => {
         </div>
       )}
 
-      <Navbar user={user} onLogout={() => setShowLogoutConfirm(true)} activeTab={activeTab} setActiveTab={setActiveTab} />
+      <Navbar
+        user={user}
+        onLogout={() => setShowLogoutConfirm(true)}
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        onLoginClick={() => setShowAuthModal(true)} />
 
       <main className="max-w-7xl mx-auto px-4 pt-24">
-        {!user ? (
-          <AuthLogic onLogin={handleAuthComplete} notify={notify} />
-        ) : isNewRegistration ? (
-          <div className="max-w-xl mx-auto py-8">
-            <SkinQuiz
-              onComplete={handleQuizComplete}
-              initialAge={getDynamicAge()}
-            />
+        {user && isNewRegistration ? (
+          <div className="max-xl mx-auto py-8">
+            <SkinQuiz onComplete={handleQuizComplete} initialAge={getDynamicAge()} />
           </div>
         ) : (
-          <>
+            <div className="relative">
+
+              {/* OVERLAY LOGIC */}
+              {!user && activeTab !== 'DASHBOARD' && (
+                <div
+                  onClick={() => setShowAuthModal(true)}
+                  className="fixed inset-0 z-[50] cursor-pointer bg-transparent"
+                  title="Click to Unlock"
+                >
+                </div>
+              )}
+            <div className={!user ? "pointer-events-none opacity-50 grayscale blur-[2px] transition-all duration-500" : ""}></div>
             {activeTab === 'DASHBOARD' && (
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                <div className="lg:col-span-4">
-                  <SafetyChart products={scannedProducts} onNavigate={() => setActiveTab('VAULT')} />
+                <div className="lg:col-span-4" onClick={() => !user && setShowAuthModal(true)}>
+                  <div className={!user ? "pointer-events-none opacity-60 grayscale" : ""}>
+                    <SafetyChart products={scannedProducts} onNavigate={() => user ? setActiveTab('VAULT') : setShowAuthModal(true)} />
+                  </div>
                 </div>
-                <div className="lg:col-span-8">
-                  <ProductTable
-                    products={scannedProducts.slice(0, 3)}
-                    onDelete={(idx) => setDeleteConfirm({ idx, name: scannedProducts[idx].name })}
-                    showTitle={true}
-                    onNavigate={() => setActiveTab('VAULT')}
-                  />
+                <div className="lg:col-span-8" onClick={() => !user && setShowAuthModal(true)}>
+                  <div className={!user ? "pointer-events-none opacity-60 grayscale" : ""}>
+                    <ProductTable
+                      products={scannedProducts.slice(0, 3)}
+                      onDelete={(idx) => setDeleteConfirm({ idx, name: scannedProducts[idx].name })}
+                      showTitle={true}
+                      onNavigate={() => user ? setActiveTab('VAULT') : setShowAuthModal(true)}
+                    />
+                  </div>
                 </div>
               </div>
             )}
@@ -249,7 +274,6 @@ const SkinBloom = () => {
                 )}
               </div>
             )}
-
             {activeTab === 'SCAN' && (
               <Scanner
                 userAge={getDynamicAge()}
@@ -262,7 +286,6 @@ const SkinBloom = () => {
                 notify={notify}
               />
             )}
-
             {activeTab === 'PROFILE' && (
               <ProfileView
                 user={{ ...user, age: getDynamicAge() }}
@@ -270,39 +293,44 @@ const SkinBloom = () => {
                 onResetProfile={handleResetProfile}
               />
             )}
-          </>
+          </div>
         )}
       </main>
 
-      {user && skinProfile && !isNewRegistration && (
+      {/* {user && skinProfile && !isNewRegistration && (
         <MobileNav activeTab={activeTab} setActiveTab={setActiveTab} />
-      )}
+      )} */}
+      <MobileNav activeTab={activeTab} setActiveTab={setActiveTab} />
 
-      {showLogoutConfirm && (
-        <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-          <div className="bg-white w-full max-w-sm rounded-[3rem] p-8 text-center animate-in zoom-in-95">
-            <h2 className="text-xl font-black uppercase">Exit SkinBloom?</h2>
-            <div className="flex flex-col gap-3 mt-8">
-              <button onClick={() => handleLogout(false)} className="w-full bg-slate-900 text-white py-4 rounded-2xl font-black uppercase text-xs">Just Logout</button>
-              <button onClick={() => handleLogout(true)} className="w-full border-2 border-red-100 text-red-500 py-4 rounded-2xl font-black uppercase text-xs">Wipe All Data</button>
-              <button onClick={() => setShowLogoutConfirm(false)} className="text-slate-300 font-black uppercase text-[10px] mt-2">Cancel</button>
+      {
+        showLogoutConfirm && (
+          <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+            <div className="bg-white w-full max-w-sm rounded-[3rem] p-8 text-center animate-in zoom-in-95">
+              <h2 className="text-xl font-black uppercase">Exit SkinBloom?</h2>
+              <div className="flex flex-col gap-3 mt-8">
+                <button onClick={() => handleLogout(false)} className="w-full bg-slate-900 text-white py-4 rounded-2xl font-black uppercase text-xs">Just Logout</button>
+                <button onClick={() => handleLogout(true)} className="w-full border-2 border-red-100 text-red-500 py-4 rounded-2xl font-black uppercase text-xs">Wipe All Data</button>
+                <button onClick={() => setShowLogoutConfirm(false)} className="text-slate-300 font-black uppercase text-[10px] mt-2">Cancel</button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
-      {deleteConfirm && (
-        <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-slate-900/40">
-          <div className="bg-white w-full max-w-sm rounded-[3rem] p-8 text-center">
-            <h2 className="text-xl font-black uppercase">Remove Item?</h2>
-            <div className="flex flex-col gap-2 mt-6">
-              <button onClick={() => { setScannedProducts(scannedProducts.filter((_, i) => i !== deleteConfirm.idx)); setDeleteConfirm(null); }} className="w-full bg-slate-900 text-white py-4 rounded-2xl font-black uppercase text-xs">Delete</button>
-              <button onClick={() => setDeleteConfirm(null)} className="w-full py-4 text-slate-300 font-black uppercase text-xs">Cancel</button>
+      {
+        deleteConfirm && (
+          <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-slate-900/40">
+            <div className="bg-white w-full max-w-sm rounded-[3rem] p-8 text-center">
+              <h2 className="text-xl font-black uppercase">Remove Item?</h2>
+              <div className="flex flex-col gap-2 mt-6">
+                <button onClick={() => { setScannedProducts(scannedProducts.filter((_, i) => i !== deleteConfirm.idx)); setDeleteConfirm(null); }} className="w-full bg-slate-900 text-white py-4 rounded-2xl font-black uppercase text-xs">Delete</button>
+                <button onClick={() => setDeleteConfirm(null)} className="w-full py-4 text-slate-300 font-black uppercase text-xs">Cancel</button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
-    </div>
+        )
+      }
+    </div >
   );
 };
 

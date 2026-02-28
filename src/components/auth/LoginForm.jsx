@@ -17,7 +17,7 @@ const LoginForm = ({ formData, setFormData }) => {
           Password
         </label>
         <input
-          required type="password" placeholder="••••••••"
+          required type="password" placeholder="••••••••" maxLength={8}
           className="w-full bg-slate-50 border-none rounded-xl px-4 py-3 text-sm font-bold text-slate-800 focus:ring-2 focus:ring-brand outline-none transition-all"
           value={formData.password}
           onChange={(e) => setFormData({ ...formData, password: e.target.value })}

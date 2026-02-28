@@ -4,13 +4,12 @@ const SignUp = ({ formData, setFormData }) => {
   return (
     <div className="grid grid-cols-2 gap-x-4 gap-y-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
 
-      {/* Email - Row 1 Left */}
       <div>
         <label className="text-[10px] font-black text-slate-700 uppercase ml-3 tracking-widest">Email Address</label>
         <div className="relative mt-1">
           <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
           <input
-            required type="email" placeholder="hello@example.com"
+            required type="email" placeholder="Email"
             className="w-full bg-slate-100 rounded-xl pl-12 pr-4 py-3.5 text-sm font-bold text-slate-800 outline-none focus:ring-2 focus:ring-brand transition-all"
             value={formData.email}
             onChange={(e) => setFormData({ ...formData, email: e.target.value })}
@@ -18,7 +17,6 @@ const SignUp = ({ formData, setFormData }) => {
         </div>
       </div>
 
-      {/* Phone - Row 1 Right */}
       <div>
         <label className="text-[10px] font-black text-slate-700 uppercase ml-3 tracking-widest">Phone</label>
         <div className="relative mt-1">
@@ -32,7 +30,6 @@ const SignUp = ({ formData, setFormData }) => {
         </div>
       </div>
 
-      {/* Password - Row 2 Left */}
       <div>
         <label className="text-[10px] font-black text-slate-700 uppercase ml-3 tracking-widest">Create Password</label>
         <div className="relative mt-1">
@@ -46,7 +43,6 @@ const SignUp = ({ formData, setFormData }) => {
         </div>
       </div>
 
-      {/* Confirm Password - Row 2 Right */}
       <div>
         <label className="text-[10px] font-black text-slate-700 uppercase ml-3 tracking-widest">Confirm Password</label>
         <div className="relative mt-1">

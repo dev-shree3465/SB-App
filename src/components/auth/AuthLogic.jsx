@@ -1,13 +1,12 @@
-import { ChevronRight, LogIn, UserPlus } from 'lucide-react';
-import { useAuth } from '../../hooks/auth/useAuth'; 
+import { ChevronRight, LogIn, UserPlus, X } from 'lucide-react';
+import { useAuth } from '../../hooks/auth/useAuth';
 import GoogleLogin from './GoogleLogin';
 import LoginForm from './LoginForm';
 import SignUp from './SignUp';
 import AuthHeader from './AuthHeader';
 import OTPView from './OTPView';
 
-const AuthLogic = ({ onLogin, notify }) => {
-  // Get everything from our custom hook
+const AuthLogic = ({ onLogin, notify, onClose }) => {
   const {
     isNewUser,
     step,
@@ -23,12 +22,12 @@ const AuthLogic = ({ onLogin, notify }) => {
 
   return (
     <div className="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-4 overflow-hidden">
-      <div className={`bg-white w-full transition-all ease-in-out rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in duration-300 ${isNewUser && step === 'AUTH' ? 'max-w-[620px]' : 'max-w-[400px]'}`}>
+      <div className={`bg-white w-full transition-all ease-in-out rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in duration-300 ${isNewUser && step === 'AUTH' ? 'max-w-[450px]' : 'max-w-[400px]'}`}>
         <div className="p-6 md:p-8 text-center max-h-[90vh] overflow-y-auto no-scrollbar">
 
           {step === 'AUTH' ? (
             <>
-              <AuthHeader isNewUser={isNewUser} />
+              <AuthHeader isNewUser={isNewUser} onClose={onClose} />
               <GoogleLogin />
 
               <div className="relative flex items-center justify-center my-4">
