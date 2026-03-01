@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 
 export const useAuth = (onLogin, notify) => {
   const [isNewUser, setIsNewUser] = useState(false);
@@ -8,27 +8,60 @@ export const useAuth = (onLogin, notify) => {
     name: '', phone: '', email: '', password: '', confirmPassword: ''
   });
 
-  const toggleAuthMode = () => {
-    setIsNewUser(!isNewUser);
+  const toggleAuthMode = useCallback(() => {
+    setIsNewUser(prev => !prev);
     setStep('AUTH');
-    setFormData({ name: '', phone: '', email: '', password: '', confirmPassword: '' });
-  };
+    setFormData(prev => ({
+      ...prev,
+      password: '',
+      confirmPassword: '',
+      name: '',
+      phone: ''
+    }));
+  }, []);
 
   const handleAuthSubmit = (e) => {
-    if (e) e.preventDefault();
-    if (!formData.email || !formData.password) return notify("Email & Password required", "error");
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
 
+    // 1. Validation Check
+    if (!formData.email || !formData.password) {
+      notify("Email & Password required", "error");
+      return;
+    }
+
+    // 2. Database Check
     const registeredUsers = JSON.parse(localStorage.getItem("skinbloom_registered_users") || "[]");
-    const userExists = registeredUsers.find(u => u.email === formData.email);
+    const targetEmail = formData.email.trim().toLowerCase();
+    const userExists = registeredUsers.find(u => u.email.toLowerCase() === targetEmail);
 
     if (isNewUser) {
-      if (userExists) return notify("Email already registered!", "error");
-      if (formData.password !== formData.confirmPassword) return notify("Passwords don't match!", "error");
+      // SIGN UP LOGIC
+      if (userExists) {
+        notify("Email already registered!", "error");
+        return;
+      }
+      if (formData.password !== formData.confirmPassword) {
+        notify("Passwords don't match!", "error");
+        return;
+      }
       setStep('OTP');
       notify("Security Code Sent", "info");
     } else {
-      if (!userExists) return notify("Account not found!", "error");
-      if (userExists.password !== formData.password) return notify("Incorrect password!", "error");
+      // LOGIN LOGIC
+      if (!userExists) {
+        // This is where your bug was. Ensure notify is called directly.
+        notify("Account not found!", "error");
+        return;
+      }
+
+      if (userExists.password !== formData.password) {
+        notify("Incorrect password!", "error");
+        return;
+      }
+
       onLogin(userExists, false);
     }
   };

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, Filter, SortDesc, Sparkles, Lock } from 'lucide-react';
+import { X, Filter, SortDesc, Sparkles } from 'lucide-react';
 
 import { Navbar } from './components/layout/Navbar';
 import { MobileNav } from './components/layout/MobileNav';
@@ -9,6 +9,7 @@ import { Scanner } from './components/scanning/Scanner';
 import { ProfileView } from './components/profile/ProfileView';
 import { SafetyChart } from './components/dashboard/SafetyChart';
 import { ProductTable } from './components/dashboard/ProductTable';
+import { CustomDropdown } from './components/layout/CustomDropdown';
 
 const APP_ID = "skinbloom-v1";
 
@@ -39,6 +40,8 @@ const SkinBloom = () => {
   const [isNewRegistration, setIsNewRegistration] = useState(false);
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
 
+  const [registeredEmail, setRegisteredEmail] = useState("");
+
   useEffect(() => {
     if (user) localStorage.setItem(`${APP_ID}_user`, JSON.stringify(user));
     if (skinProfile) localStorage.setItem(`${APP_ID}_profile`, JSON.stringify(skinProfile));
@@ -51,23 +54,57 @@ const SkinBloom = () => {
   };
 
   const handleAuthComplete = (userData, isSignup = false) => {
-    setUser(userData);
-    setShowAuthModal(false)
-
-    const allProfiles = JSON.parse(localStorage.getItem(`skinbloom_all_profiles`) || "{}");
-    const userProfile = allProfiles[userData.email];
-
     if (isSignup) {
+      // Step 1: Signup Success
+      setRegisteredEmail(userData.email); // Store email for later pre-fill
+      setUser(userData);
       setIsNewRegistration(true);
+      setShowAuthModal(false);
       notify("Register Success! Let's calibrate your skin.", "success");
     } else {
+      // Normal Login Logic
+      setUser(userData);
+      setShowAuthModal(false);
+      const allProfiles = JSON.parse(localStorage.getItem(`skinbloom_all_profiles`) || "{}");
+      const userProfile = allProfiles[userData.email];
+
       if (userProfile) {
         setSkinProfile(userProfile);
         setIsNewRegistration(false);
       } else {
         setIsNewRegistration(true);
-        setActiveTab('DASHBOARD');
       }
+    }
+  };
+
+  const handleQuizComplete = (quizData) => {
+    const newProfile = {
+      type: quizData.skinType,
+      birthYear: quizData.birthYear,
+      date: new Date().toISOString()
+    };
+
+    setSkinProfile(newProfile);
+
+    // Save to global profiles
+    const allProfiles = JSON.parse(localStorage.getItem(`skinbloom_all_profiles`) || "{}");
+    allProfiles[user.email] = newProfile;
+    localStorage.setItem(`skinbloom_all_profiles`, JSON.stringify(allProfiles));
+
+    if (isNewRegistration) {
+      // Step 4: Quiz Finished -> Show Success -> Redirect to Login
+      setShowSuccessPopup(true);
+
+      setTimeout(() => {
+        setShowSuccessPopup(false);
+        setUser(null); // Log them out so they have to login
+        setIsNewRegistration(false);
+        setShowAuthModal(true); // Step 5: Open Login Modal automatically
+        notify("Profile Saved! Please login to start.", "success");
+      }, 3000);
+    } else {
+      setActiveTab('DASHBOARD');
+      notify("Profile Calibrated!", "success");
     }
   };
 
@@ -84,40 +121,12 @@ const SkinBloom = () => {
     return list;
   };
 
-  // UPDATED: Calculate age dynamically using the stored Birth Year
   const getDynamicAge = () => {
     if (skinProfile?.birthYear) {
       const currentYear = new Date().getFullYear();
       return currentYear - skinProfile.birthYear;
     }
     return user?.age || 0;
-  };
-
-  const handleQuizComplete = (quizData) => {
-    const newProfile = {
-      type: quizData.skinType,
-      birthYear: quizData.birthYear, // Critical for age math
-      date: new Date().toISOString()
-    };
-
-    setSkinProfile(newProfile);
-
-    const allProfiles = JSON.parse(localStorage.getItem(`skinbloom_all_profiles`) || "{}");
-    allProfiles[user.email] = newProfile;
-    localStorage.setItem(`skinbloom_all_profiles`, JSON.stringify(allProfiles));
-
-    if (isNewRegistration) {
-      setShowSuccessPopup(true);
-      setTimeout(() => {
-        setShowSuccessPopup(false);
-        setUser(null);
-        setIsNewRegistration(false);
-        notify("Profile Saved! Please login to start.", "success");
-      }, 3000);
-    } else {
-      setActiveTab('DASHBOARD');
-      notify("Profile Calibrated!", "success");
-    }
   };
 
   const handleResetProfile = () => {
@@ -131,10 +140,10 @@ const SkinBloom = () => {
   const handleLogout = (wipeAll = false) => {
     if (wipeAll) {
       localStorage.clear();
-
       setSkinProfile(null);
       setScannedProducts([]);
       setUser(null);
+      setRegisteredEmail(""); // ADD THIS LINE to clear the pre-fill memory
     } else {
       localStorage.removeItem(`${APP_ID}_user`);
       setUser(null);
@@ -151,7 +160,12 @@ const SkinBloom = () => {
       {showAuthModal && (
         <div className="fixed inset-0 z-[600]">
           <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setShowAuthModal(false)} />
-          <AuthLogic onLogin={handleAuthComplete} notify={notify} onClose={() => setShowAuthModal(false)} />
+          <AuthLogic
+            onLogin={handleAuthComplete}
+            notify={notify}
+            onClose={() => setShowAuthModal(false)}
+            initialEmail={registeredEmail}
+          />
         </div>
       )}
 
@@ -161,14 +175,28 @@ const SkinBloom = () => {
             <div className="w-20 h-20 bg-green-50 text-green-500 rounded-3xl flex items-center justify-center mx-auto mb-6">
               <Sparkles size={40} className="animate-bounce" />
             </div>
-            <h2 className="text-xl font-black uppercase tracking-tight text-slate-800 text-center">Skin Profile Complete!</h2>
-            <p className="text-[10px] font-bold text-slate-400 mt-2 uppercase tracking-[0.2em] text-center">Redirecting in 3s...</p>
+
+            <h2 className="text-xl font-black uppercase tracking-tight text-slate-800">
+              Profile Complete!
+            </h2>
+
+            {/* NEW: Displaying the actual result clearly */}
+            <div className="mt-4 p-3 bg-brand/5 border border-brand/20 rounded-2xl">
+              <p className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400">Your Calibrated Type:</p>
+              <p className="text-2xl font-black text-brand uppercase tracking-tighter">
+                {skinProfile?.type || "Calculating..."}
+              </p>
+            </div>
+
+            <p className="text-[10px] font-bold text-slate-400 mt-6 uppercase tracking-[0.2em]">
+              Finalizing your dashboard...
+            </p>
           </div>
         </div>
       )}
 
       {notification && (
-        <div className="fixed bottom-6 right-6 z-[300] w-auto max-w-[280px] sm:max-w-[320px] animate-in slide-in-from-right-10 duration-300">
+        <div className="fixed bottom-6 right-6 z-[700] w-auto max-w-[280px] sm:max-w-[320px] animate-in slide-in-from-right-10 duration-300">
           <div className={`
             flex items-center gap-3 p-4 rounded-[1.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.15)] 
             border backdrop-blur-md bg-white/90 
@@ -188,7 +216,10 @@ const SkinBloom = () => {
         onLogout={() => setShowLogoutConfirm(true)}
         activeTab={activeTab}
         setActiveTab={setActiveTab}
-        onLoginClick={() => setShowAuthModal(true)} />
+        onLoginClick={() => {
+          setRegisteredEmail("");
+          setShowAuthModal(true);
+        }} />
 
       <main className="max-w-7xl mx-auto px-4 pt-24">
         {user && isNewRegistration ? (
@@ -196,17 +227,17 @@ const SkinBloom = () => {
             <SkinQuiz onComplete={handleQuizComplete} initialAge={getDynamicAge()} />
           </div>
         ) : (
-            <div className="relative">
+          <div className="relative">
 
-              {/* OVERLAY LOGIC */}
-              {!user && activeTab !== 'DASHBOARD' && (
-                <div
-                  onClick={() => setShowAuthModal(true)}
-                  className="fixed inset-0 z-[50] cursor-pointer bg-transparent"
-                  title="Click to Unlock"
-                >
-                </div>
-              )}
+            {/* OVERLAY LOGIC */}
+            {!user && activeTab !== 'DASHBOARD' && (
+              <div
+                onClick={() => setShowAuthModal(true)}
+                className="fixed inset-0 z-[50] cursor-pointer bg-transparent"
+                title="Click to "
+              >
+              </div>
+            )}
             <div className={!user ? "pointer-events-none opacity-50 grayscale blur-[2px] transition-all duration-500" : ""}></div>
             {activeTab === 'DASHBOARD' && (
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
@@ -230,36 +261,38 @@ const SkinBloom = () => {
 
             {activeTab === 'VAULT' && (
               <div className="max-w-5xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-700">
-                <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 px-6 gap-6">
-                  <div>
-                    <h2 className="text-3xl font-black uppercase tracking-tight">Product Vault</h2>
-                    <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em] mt-1">Full safety history & filters</p>
+                {/* HEADER SECTION - Tightened Gap and Padding */}
+                <div className="flex flex-row items-center justify-between mb-8 px-4 sm:px-6 gap-1.5">
+
+                  <div className="flex-shrink-0">
+                    <h2 className="text-base sm:text-2xl md:text-3xl font-black uppercase tracking-tight whitespace-nowrap">
+                      Product Vault
+                    </h2>
                   </div>
-                  <div className="flex flex-wrap gap-3">
-                    <div className="flex items-center bg-white rounded-2xl px-4 py-2 border border-slate-100 shadow-sm">
-                      <Filter size={14} className="mr-2 text-slate-400" />
-                      <select
-                        value={statusFilter}
-                        onChange={(e) => setStatusFilter(e.target.value)}
-                        className="text-[10px] font-black uppercase tracking-widest bg-transparent outline-none cursor-pointer"
-                      >
-                        <option value="ALL">All Status</option>
-                        <option value="GREEN" className='text-green-500'>Safe Only</option>
-                        <option value="YELLOW" className='text-amber-500'>Warnings</option>
-                        <option value="RED" className='text-red-500'>Risk Only</option>
-                      </select>
-                    </div>
-                    <div className="flex items-center bg-white rounded-2xl px-4 py-2 border border-slate-100 shadow-sm">
-                      <SortDesc size={14} className="mr-2 text-slate-400" />
-                      <select
-                        value={sortOrder}
-                        onChange={(e) => setSortOrder(e.target.value)}
-                        className="text-[10px] font-black uppercase tracking-widest bg-transparent outline-none cursor-pointer"
-                      >
-                        <option value="LATEST">Latest Scan</option>
-                        <option value="EXPIRY">Expiry Priority</option>
-                      </select>
-                    </div>
+
+                  <div className="flex flex-row items-center justify-end gap-1 sm:gap-2 flex-nowrap flex-1">
+                    <CustomDropdown
+                      icon={Filter}
+                      value={statusFilter}
+                      onChange={setStatusFilter}
+                      label="Status"
+                      options={[
+                        { value: 'ALL', label: 'Status' }, // Shorter labels for mobile
+                        { value: 'GREEN', label: 'Safe' },
+                        { value: 'YELLOW', label: 'Warn' },
+                        { value: 'RED', label: 'Risk' },
+                      ]}
+                    />
+                    <CustomDropdown
+                      icon={SortDesc}
+                      value={sortOrder}
+                      onChange={setSortOrder}
+                      label="Sort"
+                      options={[
+                        { value: 'LATEST', label: 'Latest' },
+                        { value: 'EXPIRY', label: 'Expiry' },
+                      ]}
+                    />
                   </div>
                 </div>
                 <ProductTable
@@ -274,6 +307,7 @@ const SkinBloom = () => {
                 )}
               </div>
             )}
+
             {activeTab === 'SCAN' && (
               <Scanner
                 userAge={getDynamicAge()}
@@ -288,8 +322,8 @@ const SkinBloom = () => {
             )}
             {activeTab === 'PROFILE' && (
               <ProfileView
-                user={{ ...user, age: getDynamicAge() }}
-                skinType={skinProfile?.type}
+                user={user ? { ...user, age: getDynamicAge() } : null}
+                skinType={user ? skinProfile?.type : null} // Hide skin type if logged out
                 onResetProfile={handleResetProfile}
               />
             )}
@@ -297,9 +331,6 @@ const SkinBloom = () => {
         )}
       </main>
 
-      {/* {user && skinProfile && !isNewRegistration && (
-        <MobileNav activeTab={activeTab} setActiveTab={setActiveTab} />
-      )} */}
       <MobileNav activeTab={activeTab} setActiveTab={setActiveTab} />
 
       {

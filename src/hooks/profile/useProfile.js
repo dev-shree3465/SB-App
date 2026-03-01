@@ -1,14 +1,38 @@
-import { useState } from 'react';
+export const useProfile = (user, skinType) => {
+  const isLoggedIn = !!user;
 
-export const useProfile = (skinType) => {
-  // Generate a persistent ID for the session
-  const [userId] = useState(() => `SKIN-${Math.floor(Math.random() * 9000) + 1000}`);
+  // 1. Name Logic
+  const displayName = isLoggedIn ? user.name : "Guest User";
 
-  // Ensure we always get the string value of the skin type
-  const displaySkinType = typeof skinType === 'object' ? skinType.skinType : skinType;
+  // 2. Age Logic
+  const displayAge = isLoggedIn ? user.age : "0";
+
+  // 3. ID Logic
+  const userId = isLoggedIn && user.id
+    ? `SKIN-${user.id.toString().slice(-4)}`
+    : "Not Available";
+
+  // 4. Contact Logic
+  const displayEmail = isLoggedIn ? (user.email || "Email not linked") : "Email not linked";
+  const displayPhone = isLoggedIn ? (user.phone || "Phone not linked") : "Phone not linked";
+
+  // 5. Skin Type Logic
+  let typeValue = "NONE";
+  if (isLoggedIn && skinType) {
+    if (typeof skinType === 'object') {
+      typeValue = skinType.type || skinType.skinType || "NONE";
+    } else {
+      typeValue = skinType;
+    }
+  }
 
   return {
+    displayName,
+    displayAge,
     userId,
-    displaySkinType
+    displayEmail,
+    displayPhone,
+    displaySkinType: typeValue.toUpperCase(),
+    isLoggedIn
   };
 };
