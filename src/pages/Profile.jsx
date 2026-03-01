@@ -1,15 +1,34 @@
+import { useState } from 'react'; 
 import { ShieldCheck, AlertCircle, RefreshCcw } from 'lucide-react';
-import { useProfile } from '../../hooks/profile/useProfile';
-import { UserIdentityCard } from './UserIdentityCard';
+import { useProfile } from '../hooks/profile/useProfile';
+import { UserIdentityCard } from '../components/profile/UserIdentityCard';
+import { LogoutConfirmModal } from '../components/modals/LogoutConfirmModal';
 
-export const ProfileView = ({ user, skinType, onResetProfile, onLogout }) => {
+export const Profile = ({ user, skinType, onResetProfile, onLogout }) => {
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
   const profileData = useProfile(user, skinType);
   const { displaySkinType, isLoggedIn } = profileData;
 
   return (
     <div className="max-w-2xl mx-auto space-y-3 md:space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
 
-      <UserIdentityCard profileData={profileData} onLogout={onLogout} />
+      <UserIdentityCard
+        profileData={profileData}
+        user={user}
+        onLogout={() => setShowLogoutModal(true)}
+      />
+
+      {/* Profile logic continues... */}
+
+      {/* 2. MODAL RENDER: Modal-ah inga add pannunga */}
+      <LogoutConfirmModal
+        isOpen={showLogoutModal}
+        onClose={() => setShowLogoutModal(false)}
+        onLogout={(wipe) => {
+          onLogout(wipe); // Main logout logic trigger aagum
+          setShowLogoutModal(false);
+        }}
+      />
 
       <div className="bg-white rounded-[1.8rem] md:rounded-[3rem] p-4 sm:p-6 md:p-8 shadow-sm border border-slate-100">
 
@@ -44,19 +63,18 @@ export const ProfileView = ({ user, skinType, onResetProfile, onLogout }) => {
             {/* Reset Profile Card */}
             <div className="p-3.5 sm:p-5 md:p-8 bg-red-50 border border-red-200 rounded-[1.2rem] md:rounded-4xl shadow-sm">
               <div className="flex flex-col md:flex-row items-center justify-between gap-3 md:gap-7">
-
                 {/* Text Section */}
                 <div className="text-center md:text-left flex flex-col items-center md:items-start flex-1">
-                  <h4 className="font-black text-[9px] md:text-sm text-red-800 uppercase tracking-tight">
+                  <h4 className="font-black text-[12px] md:text-[1.3rem] text-red-700 uppercase tracking-tight">
                     Need a Re-scan?
                   </h4>
-                  <p className="text-[9px] md:text-sm text-red-600 font-medium mt-0.5 leading-tight max-w-[180px] sm:max-w-[250px] md:max-w-md">
+                  <p className="text-[10px] md:text-[1rem] text-red-600 font-medium mt-0.5 leading-tight max-w-[180px] sm:max-w-[250px] md:max-w-md">
                     Resetting will remove your skin profile and let you take the quiz again.
                   </p>
                 </div>
 
                 {/* Button Section */}
-                <div className="w-full md:w-auto shrink-0 mt-1 md:mt-0">
+                <div className="w-full md:w-auto shrink-0 mt-0">
                   <button
                     onClick={onResetProfile}
                     className="w-full md:w-auto bg-red-600 text-white px-4 py-3 md:py-3 rounded-xl font-black text-[9px] md:text-xs flex items-center justify-center gap-2 hover:bg-red-700 active:scale-95 transition-all uppercase tracking-widest"

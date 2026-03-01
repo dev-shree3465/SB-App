@@ -63,7 +63,7 @@ export const CameraInterface = ({
           </div>
         </label>
       )}
-      <button onClick={resetScanner} className="mt-6 text-[10px] font-black text-slate-300 uppercase tracking-widest">Cancel Analysis</button>
+      <button onClick={resetScanner} className="mt-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Cancel Analysis</button>
     </div>
   );
 };

@@ -54,7 +54,7 @@ export const useScanner = (onScanComplete, skinType, notify) => {
       }
     }
   };
-
+  
   const handleUpload = (e, type) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -63,6 +63,7 @@ export const useScanner = (onScanComplete, skinType, notify) => {
       notify("Front label uploaded", "success");
     } else if (type === 'back') {
       setCapturedImages(prev => ({ ...prev, back: file }));
+      notify("Ingredients captured", "success");
       if (knowExpiry === 'NO') processFinalResults(manualDate);
     } else if (type === 'expiry') {
       processFinalResults(manualDate);

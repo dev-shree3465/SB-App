@@ -1,7 +1,7 @@
-import { useScanner } from '../../hooks/scanning/useScanner';
-import { ScannerSteps } from './ScannerSteps';
-import { ExpiryDate } from './ExpiryDate';
-import { CameraInterface } from './CameraInterface';
+import { useScanner } from '../hooks/scanning/useScanner';
+import { ScannerSteps } from '../components/scanning/ScannerSteps';
+import { ExpiryDate } from '../components/scanning/ExpiryDate';
+import { CameraInterface } from '../components/scanning/CameraInterface';
 
 export const Scanner = ({ onScanComplete, skinType, notify }) => {
   const {

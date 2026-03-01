@@ -71,7 +71,7 @@ export const QUIZ_QUESTIONS = [
   }
 ];
 
-export const useSkinQuiz = (onComplete, initialAge) => {
+export const useQuiz = (onComplete, initialAge) => {
   const [birthDate, setBirthDate] = useState('');
   const [showAgeStep, setShowAgeStep] = useState(!initialAge);
   const [currentStep, setCurrentStep] = useState(0);

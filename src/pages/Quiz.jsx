@@ -1,25 +1,25 @@
 import { ChevronRight, Sparkles } from 'lucide-react';
-import { useSkinQuiz, QUIZ_QUESTIONS } from '../../hooks/quiz/useSkinQuiz';
-import { AgeStep } from './AgeStep';
+import { useQuiz, QUIZ_QUESTIONS } from '../hooks/quiz/useSkinQuiz.js';
+import { AgeStep } from '../components/quiz/AgeStep';
 
-export const SkinQuiz = ({ onComplete, initialAge }) => {
+export const Quiz = ({ onComplete, initialAge }) => {
   const {
     birthDate, setBirthDate,
     showAgeStep, setShowAgeStep,
     currentStep,
     handleAnswer,
     progress
-  } = useSkinQuiz(onComplete, initialAge);
+  } = useQuiz(onComplete, initialAge);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-50/50 backdrop-blur-sm">
       <div className="w-full max-w-md bg-white p-6 md:p-8 rounded-[2.5rem] shadow-2xl border border-slate-100 animate-in zoom-in duration-300">
-        
+
         {showAgeStep ? (
-          <AgeStep 
-            birthDate={birthDate} 
-            setBirthDate={setBirthDate} 
-            onSubmit={() => setShowAgeStep(false)} 
+          <AgeStep
+            birthDate={birthDate}
+            setBirthDate={setBirthDate}
+            onSubmit={() => setShowAgeStep(false)}
           />
         ) : (
           <>
@@ -55,7 +55,7 @@ export const SkinQuiz = ({ onComplete, initialAge }) => {
         <div className="mt-8 p-4 bg-slate-50 rounded-[1.5rem] flex items-start gap-4">
           <Sparkles className="text-brand shrink-0" size={16} />
           <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider leading-relaxed">
-            Personalized safety analysis based on your age and skin type.
+            Personalized safety analysis based on your age and skin type. So Answer Genuinely.
           </p>
         </div>
       </div>

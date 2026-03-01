@@ -1,13 +1,15 @@
-import { User, Mail, Phone, LogOut } from 'lucide-react';
+import { Mail, Phone, LogOut } from 'lucide-react';
 
-export const UserIdentityCard = ({ profileData, onLogout }) => {
+export const UserIdentityCard = ({ user, profileData, onLogout }) => {
   const { displayName, displayAge, userId, displayEmail, displayPhone, isLoggedIn } = profileData;
 
   return (
     <div className="bg-white rounded-[2.5rem] md:rounded-[3rem] p-2 sm:p-4 md:p-8 shadow-sm border border-slate-100 overflow-hidden relative">
       <div className="flex flex-row items-center gap-4 md:gap-6 relative z-10">
         <div className="w-16 h-16 md:w-20 md:h-20 bg-brand rounded-full flex items-center justify-center shadow-xl shadow-brand/20 border-4 border-white shrink-0">
-          <User className="text-white" size={28} md:size={36} />
+          <span className="text-3xl text-white font-black uppercase">
+            {user.name ? user.name.charAt(0) : 'G'}
+          </span>
         </div>
         <div className="flex-1 min-w-0">
           <h2 className="text-xl md:text-3xl capitalize font-black text-slate-800 tracking-tighter truncate">

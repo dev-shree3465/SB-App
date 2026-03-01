@@ -11,7 +11,7 @@ export const SAFETY_DATABASE = {
     { name: "Oxybenzone", risk: "YELLOW", reason: "High skin absorption/allergy" },
   ],
 
-  // Specific triggers for Sensitive Skin (SkinQuiz connection)
+  // Specific triggers for Sensitive Skin (Quiz connection)
   sensitiveTriggers: [
     "Alcohol Denat",
     "Essential Oils",
@@ -40,7 +40,7 @@ export const SAFETY_DATABASE = {
         foundHarmful.push(match.name);
       }
 
-      // Special check for user's skin type from SkinQuiz
+      // Special check for user's skin type from Quiz
       if (userSkinType === "Sensitive" && SAFETY_DATABASE.sensitiveTriggers.includes(ing)) {
         score += 7;
       }
