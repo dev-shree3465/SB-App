@@ -3,26 +3,14 @@ import { useState, useEffect } from 'react';
 const APP_ID = "skinbloom-v1";
 
 export const useCoreLogic = () => {
-  // 1. Core States
-  const [user, setUser] = useState(() => {
-    const saved = localStorage.getItem(`${APP_ID}_user`);
-    return saved ? JSON.parse(saved) : null;
-  });
+  const [user, setUser] = useState(() => JSON.parse(localStorage.getItem(`${APP_ID}_user`)) || null);
+  const [skinProfile, setSkinProfile] = useState(() => JSON.parse(localStorage.getItem(`${APP_ID}_profile`)) || null);
+  const [scannedProducts, setScannedProducts] = useState(() => JSON.parse(localStorage.getItem(`${APP_ID}_scans`)) || []);
 
-  const [skinProfile, setSkinProfile] = useState(() => {
-    const saved = localStorage.getItem(`${APP_ID}_profile`);
-    return saved ? JSON.parse(saved) : null;
-  });
+  // Memory-only state. Refreshes wipe this. 
+  const [pendingUser, setPendingUser] = useState(null);
 
-  const [scannedProducts, setScannedProducts] = useState(() => {
-    const saved = localStorage.getItem(`${APP_ID}_scans`);
-    return saved ? JSON.parse(saved) : [];
-  });
-
-  // 2. UI States
   const [activeTab, setActiveTab] = useState('DASHBOARD');
-  const [statusFilter, setStatusFilter] = useState('ALL');
-  const [sortOrder, setSortOrder] = useState('LATEST');
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
@@ -31,33 +19,47 @@ export const useCoreLogic = () => {
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const [registeredEmail, setRegisteredEmail] = useState("");
 
-  // 3. Persistance logic
+  // --- PERSISTENCE GATEKEEPER ---
   useEffect(() => {
-    if (user) localStorage.setItem(`${APP_ID}_user`, JSON.stringify(user));
-    if (skinProfile) localStorage.setItem(`${APP_ID}_profile`, JSON.stringify(skinProfile));
+    // STRICT RULE: If no official user is logged in, DO NOT save anything to user key
+    if (user) {
+      localStorage.setItem(`${APP_ID}_user`, JSON.stringify(user));
+      // Only save profile for officially logged-in users
+      if (skinProfile && skinProfile.type && skinProfile.type !== "NONE") {
+        localStorage.setItem(`${APP_ID}_profile`, JSON.stringify(skinProfile));
+      }
+    } else {
+      // If user is null (Cases 1, 2, 3), we ensure localStorage is clean
+      localStorage.removeItem(`${APP_ID}_user`);
+      localStorage.removeItem(`${APP_ID}_profile`);
+    }
     localStorage.setItem(`${APP_ID}_scans`, JSON.stringify(scannedProducts));
   }, [user, skinProfile, scannedProducts]);
 
-  // 4. Action Handlers
   const notify = (message, type = 'info') => {
     setNotification({ message, type });
-    setTimeout(() => setNotification(null), 4000);
+    setTimeout(() => setNotification(null), 3000);
   };
 
   const handleAuthComplete = (userData, isSignup = false) => {
     if (isSignup) {
+      // CASES 1, 2, 3: Zero LocalStorage impact
+      setPendingUser(userData);
       setRegisteredEmail(userData.email);
-      setUser(userData);
       setIsNewRegistration(true);
       setShowAuthModal(false);
-      notify("Register Success! Let's calibrate your skin.", "success");
+
+      setUser(null); // Keep official user null
+      setSkinProfile(null); // Keep official profile null
+
+      notify("Verification successful! Complete the quiz to finish signup.", "success");
     } else {
+      // Normal Login
       setUser(userData);
       setShowAuthModal(false);
       const allProfiles = JSON.parse(localStorage.getItem(`skinbloom_all_profiles`) || "{}");
-      const userProfile = allProfiles[userData.email];
-      if (userProfile) {
-        setSkinProfile(userProfile);
+      if (allProfiles[userData.email]) {
+        setSkinProfile(allProfiles[userData.email]);
         setIsNewRegistration(false);
       } else {
         setIsNewRegistration(true);
@@ -71,23 +73,45 @@ export const useCoreLogic = () => {
       birthYear: quizData.birthYear,
       date: new Date().toISOString()
     };
-    setSkinProfile(newProfile);
-    const allProfiles = JSON.parse(localStorage.getItem(`skinbloom_all_profiles`) || "{}");
-    allProfiles[user.email] = newProfile;
-    localStorage.setItem(`skinbloom_all_profiles`, JSON.stringify(allProfiles));
 
-    if (isNewRegistration) {
+    // CASE 4: The ONLY place data enters the "Database"
+    if (isNewRegistration && pendingUser) {
+      // 1. Write to All Users List
+      const allUsers = JSON.parse(localStorage.getItem(`skinbloom_all_users`) || "{}");
+      allUsers[pendingUser.email] = pendingUser;
+      localStorage.setItem(`skinbloom_all_users`, JSON.stringify(allUsers));
+
+      // 2. Write to All Profiles List
+      const allProfiles = JSON.parse(localStorage.getItem(`skinbloom_all_profiles`) || "{}");
+      allProfiles[pendingUser.email] = newProfile;
+      localStorage.setItem(`skinbloom_all_profiles`, JSON.stringify(allProfiles));
+
       setShowSuccessPopup(true);
+
       setTimeout(() => {
         setShowSuccessPopup(false);
-        setUser(null);
         setIsNewRegistration(false);
+
+        // 3. WIPE ALL TEMPORARY STATE
+        setPendingUser(null);
+        setUser(null);
+        setSkinProfile(null);
+
+        // 4. REDIRECT TO LOGIN
         setShowAuthModal(true);
-        notify("Profile Saved! Please login to start.", "success");
+        setActiveTab('DASHBOARD');
+        notify("Account created! Please login to continue.", "success");
       }, 3000);
     } else {
-      setActiveTab('DASHBOARD');
-      notify("Profile Calibrated!", "success");
+      // Update logic for existing logged-in users
+      setSkinProfile(newProfile);
+      if (user) {
+        const allProfiles = JSON.parse(localStorage.getItem(`skinbloom_all_profiles`) || "{}");
+        allProfiles[user.email] = newProfile;
+        localStorage.setItem(`skinbloom_all_profiles`, JSON.stringify(allProfiles));
+      }
+      setActiveTab('PROFILE');
+      notify("Profile Updated!", "success");
     }
   };
 
@@ -99,49 +123,30 @@ export const useCoreLogic = () => {
       setUser(null);
       setRegisteredEmail("");
     } else {
-      localStorage.removeItem(`${APP_ID}_user`);
       setUser(null);
     }
+    setPendingUser(null);
     setIsNewRegistration(false);
     setShowLogoutConfirm(false);
     notify(wipeAll ? "All data cleared." : "Logged out.", "info");
   };
 
-  const handleResetProfile = () => {
-    const allProfiles = JSON.parse(localStorage.getItem(`skinbloom_all_profiles`) || "{}");
-    delete allProfiles[user.email];
-    localStorage.setItem(`skinbloom_all_profiles`, JSON.stringify(allProfiles));
-    setIsNewRegistration(true);
-  };
-
   const getDynamicAge = () => {
-    if (skinProfile?.birthYear) {
-      return new Date().getFullYear() - skinProfile.birthYear;
-    }
-    return user?.age || 0;
+    if (skinProfile?.birthYear) return new Date().getFullYear() - skinProfile.birthYear;
+    return user?.age || pendingUser?.age || 0;
   };
-
-  // 5. Computed Data
-  const filteredProducts = [...scannedProducts]
-    .filter(p => statusFilter === 'ALL' || p.status === statusFilter)
-    .sort((a, b) => {
-      if (sortOrder === 'LATEST') return new Date(b.date || 0) - new Date(a.date || 0);
-      if (sortOrder === 'EXPIRY') return new Date(a.expiryDate || Infinity) - new Date(b.expiryDate || Infinity);
-      return 0;
-    });
 
   return {
-    user, skinProfile, scannedProducts, setScannedProducts,
+    user, skinProfile, setSkinProfile, scannedProducts, setScannedProducts,
     activeTab, setActiveTab,
-    statusFilter, setStatusFilter,
-    sortOrder, setSortOrder,
     showAuthModal, setShowAuthModal,
     showLogoutConfirm, setShowLogoutConfirm,
     deleteConfirm, setDeleteConfirm,
     notification, setNotification,
-    isNewRegistration, showSuccessPopup,
+    isNewRegistration, setIsNewRegistration, showSuccessPopup,
     registeredEmail, setRegisteredEmail,
     notify, handleAuthComplete, handleQuizComplete,
-    handleLogout, handleResetProfile, getDynamicAge, filteredProducts
+    handleLogout, getDynamicAge,
+    pendingUser
   };
 };

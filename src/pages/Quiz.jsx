@@ -1,15 +1,15 @@
 import { ChevronRight, Sparkles } from 'lucide-react';
-import { useQuiz, QUIZ_QUESTIONS } from '../hooks/quiz/useSkinQuiz.js';
+import { useQuiz, QUIZ_QUESTIONS } from '../hooks/quiz/useQuiz.js';
 import { AgeStep } from '../components/quiz/AgeStep';
 
-export const Quiz = ({ onComplete, initialAge }) => {
+export const Quiz = ({ onComplete, initialAge, notify }) => {
+
   const {
     birthDate, setBirthDate,
     showAgeStep, setShowAgeStep,
-    currentStep,
-    handleAnswer,
-    progress
-  } = useQuiz(onComplete, initialAge);
+    currentStep, handleAnswer, progress,
+  validateAndSetAge
+  } = useQuiz(onComplete, initialAge, notify);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-50/50 backdrop-blur-sm">
@@ -19,14 +19,20 @@ export const Quiz = ({ onComplete, initialAge }) => {
           <AgeStep
             birthDate={birthDate}
             setBirthDate={setBirthDate}
+            validateAndSetAge={validateAndSetAge}
             onSubmit={() => setShowAgeStep(false)}
           />
         ) : (
           <>
             <div className="mb-6">
               <div className="flex justify-between items-end mb-2">
-                <span className="text-[10px] font-black text-brand uppercase tracking-widest">Step {currentStep + 1} of 7</span>
-                <span className="text-[10px] font-black text-slate-300">{Math.round(progress)}%</span>
+                <span className="text-[10px] font-black text-brand uppercase tracking-widest">
+                  Step {currentStep + 1} of 7
+                </span>
+
+                <span className="text-[10px] font-black text-slate-300">
+                  {Math.round(progress)}%
+                </span>
               </div>
               <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
                 <div className="h-full bg-brand transition-all duration-700 ease-out" style={{ width: `${progress}%` }} />
@@ -44,7 +50,9 @@ export const Quiz = ({ onComplete, initialAge }) => {
                   onClick={() => handleAnswer(option)}
                   className="w-full flex items-center justify-between p-4 md:p-5 rounded-2xl border-2 border-slate-50 hover:border-brand hover:bg-brand/5 transition-all group text-left"
                 >
-                  <span className="font-bold text-sm text-slate-600 group-hover:text-brand">{option.label}</span>
+                  <span className="font-bold text-sm text-slate-600 group-hover:text-brand">
+                    {option.label}
+                  </span>
                   <ChevronRight className="text-slate-200 group-hover:text-brand transition-all" size={18} />
                 </button>
               ))}
@@ -62,3 +70,4 @@ export const Quiz = ({ onComplete, initialAge }) => {
     </div>
   );
 };
+

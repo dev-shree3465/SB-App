@@ -1,30 +1,44 @@
-export const useProfile = (user, skinType) => {
+export const useProfile = (core = {}) => {
+  const { 
+    // user, skinProfile, setSkinProfile, setIsNewRegistration, notify 
+    user = null,
+    skinProfile = null,
+    setSkinProfile = () => { },
+    setIsNewRegistration = () => { },
+    notify = () => { }
+  } = core;
+
   const isLoggedIn = !!user;
 
-  // 1. Name Logic
+  // Formatting Logics
   const displayName = isLoggedIn ? user.name : "Guest User";
-
-  // 2. Age Logic
-  const displayAge = isLoggedIn ? user.age : "0";
-
-  // 3. ID Logic
-  const userId = isLoggedIn && user.id
-    ? `SKIN-${user.id.toString().slice(-4)}`
-    : "Not Available";
-
-  // 4. Contact Logic
+  const displayAge = isLoggedIn ? (core.getDynamicAge()) : "0";
+  const userId = isLoggedIn && user.id ? `SKIN-${user.id.toString().slice(-4)}` : "Not Available";
   const displayEmail = isLoggedIn ? (user.email || "Email not linked") : "Email not linked";
   const displayPhone = isLoggedIn ? (user.phone || "Phone not linked") : "Phone not linked";
 
-  // 5. Skin Type Logic
   let typeValue = "NONE";
-  if (isLoggedIn && skinType) {
-    if (typeof skinType === 'object') {
-      typeValue = skinType.type || skinType.skinType || "NONE";
-    } else {
-      typeValue = skinType;
-    }
+  if (isLoggedIn && skinProfile) {
+    typeValue = skinProfile.type || skinProfile.skinType || "NONE";
   }
+
+  // RESET PROFILE LOGIC (Migrated from Core)
+  const handleResetProfile = () => {
+    if (!user) return;
+
+    // 1. Remove from global storage
+    const allProfiles = JSON.parse(localStorage.getItem(`skinbloom_all_profiles`) || "{}");
+    delete allProfiles[user.email];
+    localStorage.setItem(`skinbloom_all_profiles`, JSON.stringify(allProfiles));
+
+    // 2. Clear current state
+    setSkinProfile(null);
+
+    // 3. TRIGGER RESET BUG FIX: Set isNewRegistration to true so Quiz shows up
+    setIsNewRegistration(true);
+
+    notify("Profile Reset! Please retake the quiz.", "info");
+  };
 
   return {
     displayName,
@@ -33,6 +47,7 @@ export const useProfile = (user, skinType) => {
     displayEmail,
     displayPhone,
     displaySkinType: typeValue.toUpperCase(),
-    isLoggedIn
+    isLoggedIn,
+    handleResetProfile // Export this for the UI
   };
 };

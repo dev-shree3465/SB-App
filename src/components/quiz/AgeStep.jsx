@@ -1,25 +1,21 @@
 import { Calendar, ChevronRight, Sparkles } from 'lucide-react';
 import { useState } from 'react';
 
-export const AgeStep = ({ birthDate, setBirthDate, onSubmit }) => {
+export const AgeStep = ({ birthDate, setBirthDate, onSubmit, validateAndSetAge }) => {
   const [isConfirming, setIsConfirming] = useState(false);
-  const [calculatedAge, setCalculatedAge] = useState(null);
+  const [displayAge, setDisplayAge] = useState(null);
 
   const handleAgeCheck = (e) => {
     e.preventDefault();
 
-    // Calculate Age
-    const birthYear = new Date(birthDate).getFullYear();
-    const currentYear = new Date().getFullYear();
-    const age = currentYear - birthYear;
+    // Call the centralized logic in the hook
+    const age = validateAndSetAge(birthDate);
 
-    setCalculatedAge(age);
-    setIsConfirming(true);
-
-    // 3 Seconds Delay before moving to Skin Quiz
-    setTimeout(() => {
-      onSubmit();
-    }, 3000);
+    if (age !== null) {
+      setDisplayAge(age);
+      setIsConfirming(true);
+      setTimeout(() => onSubmit(), 3000);
+    }
   };
 
   if (isConfirming) {
@@ -30,7 +26,7 @@ export const AgeStep = ({ birthDate, setBirthDate, onSubmit }) => {
         </div>
         <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">Calibration Complete</p>
         <h2 className="text-3xl font-black text-slate-800 uppercase tracking-tight">
-          Your age is <span className="text-brand">{calculatedAge}</span>
+          Your age is <span className="text-brand">{displayAge}</span>
         </h2>
         <div className="mt-8 flex justify-center gap-1">
           <div className="w-1 h-1 bg-brand rounded-full animate-bounce [animation-delay:-0.3s]"></div>

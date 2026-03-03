@@ -71,22 +71,94 @@ export const QUIZ_QUESTIONS = [
   }
 ];
 
-export const useQuiz = (onComplete, initialAge) => {
+// export const useQuiz = (onComplete, initialAge) => {
+//   const [birthDate, setBirthDate] = useState('');
+//   const [showAgeStep, setShowAgeStep] = useState(!initialAge);
+//   const [currentStep, setCurrentStep] = useState(0);
+//   const [totalPoints, setTotalPoints] = useState(0);
+//   const [hasSensitiveTrigger, setHasSensitiveTrigger] = useState(false);
+
+//   const calculateAgeData = (dob) => {
+//     const today = new Date();
+//     const birthDateObj = new Date(dob);
+//     let age = today.getFullYear() - birthDateObj.getFullYear();
+//     const monthDiff = today.getMonth() - birthDateObj.getMonth();
+//     if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDateObj.getDate())) {
+//       age--;
+//     }
+//     return { age, birthYear: birthDateObj.getFullYear() };
+//   };
+
+//   const handleAnswer = (option) => {
+//     const newPoints = totalPoints + (option.points || 0);
+//     const isSensitive = hasSensitiveTrigger || option.isSensitive;
+
+//     if (currentStep < QUIZ_QUESTIONS.length - 1) {
+//       setTotalPoints(newPoints);
+//       setHasSensitiveTrigger(isSensitive);
+//       setCurrentStep(currentStep + 1);
+//     } else {
+//       let finalType = "";
+//       if (isSensitive) finalType = "Sensitive";
+//       else if (newPoints >= 18) finalType = "Oily";
+//       else if (newPoints >= 12) finalType = "Combination";
+//       else if (newPoints >= 7) finalType = "Normal";
+//       else finalType = "Dry";
+
+//       const ageData = birthDate
+//         ? calculateAgeData(birthDate)
+//         : { age: initialAge, birthYear: new Date().getFullYear() - initialAge };
+
+//       onComplete({
+//         skinType: finalType,
+//         age: ageData.age,
+//         birthYear: ageData.birthYear
+//       });
+//     }
+//   };
+
+//   return {
+//     birthDate, setBirthDate,
+//     showAgeStep, setShowAgeStep,
+//     currentStep,
+//     handleAnswer,
+//     progress: (currentStep / QUIZ_QUESTIONS.length) * 100
+//   };
+// };
+
+
+export const useQuiz = (onComplete, initialAge, notify) => {
   const [birthDate, setBirthDate] = useState('');
   const [showAgeStep, setShowAgeStep] = useState(!initialAge);
   const [currentStep, setCurrentStep] = useState(0);
   const [totalPoints, setTotalPoints] = useState(0);
   const [hasSensitiveTrigger, setHasSensitiveTrigger] = useState(false);
 
-  const calculateAgeData = (dob) => {
+  // Track the numeric age once validated
+  const [calculatedAge, setCalculatedAge] = useState(initialAge || null);
+
+  const validateAndSetAge = (dobString) => {
     const today = new Date();
-    const birthDateObj = new Date(dob);
+    const birthDateObj = new Date(dobString);
     let age = today.getFullYear() - birthDateObj.getFullYear();
     const monthDiff = today.getMonth() - birthDateObj.getMonth();
+
     if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDateObj.getDate())) {
       age--;
     }
-    return { age, birthYear: birthDateObj.getFullYear() };
+
+    // Your Big Condition: Validation
+    if (age < 0) {
+      notify?.("Invalid date. You haven't been born yet!", "error");
+      return null;
+    }
+    if (age > 100) {
+      notify?.("Please enter a valid birth year (Max age 100).", "error");
+      return null;
+    }
+
+    setCalculatedAge(age);
+    return age;
   };
 
   const handleAnswer = (option) => {
@@ -105,14 +177,11 @@ export const useQuiz = (onComplete, initialAge) => {
       else if (newPoints >= 7) finalType = "Normal";
       else finalType = "Dry";
 
-      const ageData = birthDate
-        ? calculateAgeData(birthDate)
-        : { age: initialAge, birthYear: new Date().getFullYear() - initialAge };
-
+      // Use the already calculated age and year
       onComplete({
         skinType: finalType,
-        age: ageData.age,
-        birthYear: ageData.birthYear
+        age: calculatedAge,
+        birthYear: new Date().getFullYear() - calculatedAge
       });
     }
   };
@@ -122,6 +191,8 @@ export const useQuiz = (onComplete, initialAge) => {
     showAgeStep, setShowAgeStep,
     currentStep,
     handleAnswer,
+    validateAndSetAge,
+    calculatedAge,
     progress: (currentStep / QUIZ_QUESTIONS.length) * 100
   };
 };

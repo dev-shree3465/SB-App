@@ -1,72 +1,65 @@
 import { useState } from 'react';
-import { SAFETY_DATABASE } from '../../data/safety_dictionary';
+import { getRandomIngredients, getSafetyProfile } from './scannerUtils';
 
 export const useScanner = (onScanComplete, skinType, notify) => {
   const [scanStep, setScanStep] = useState('CHOICE');
   const [scanMethod, setScanMethod] = useState(null);
-  const [capturedImages, setCapturedImages] = useState({ front: null, back: null, expiry: null });
   const [manualDate, setManualDate] = useState('');
   const [knowExpiry, setKnowExpiry] = useState(null);
-
-  const calculateDaysLeft = (expiryDate) => {
-    if (!expiryDate) return "";
-    const today = new Date();
-    const exp = new Date(expiryDate);
-    today.setHours(0, 0, 0, 0);
-    const diffTime = exp - today;
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return diffDays >= 0 ? ` (${diffDays} days left)` : ` (EXPIRED)`;
-  };
+  const [capturedImages, setCapturedImages] = useState({
+    front: null,
+    back: null,
+    expiry: null
+  });
 
   const processFinalResults = (dateStr) => {
     setScanStep('PROCESSING');
 
-    // Mock Data - In the future, this will come from an AI/OCR Backend
-    const detectedIngredients = ["Fragrance", "Ceramides", "Parabens", "Aqua"];
-
-    const safetyStatus = SAFETY_DATABASE.getStatus(detectedIngredients, skinType);
-    const daysLeftLabel = dateStr ? calculateDaysLeft(dateStr) : "";
+    // Utility logic calling
+    const detectedIngredients = getRandomIngredients();
+    const { status, expiryLabel } = getSafetyProfile(detectedIngredients, skinType, dateStr);
 
     setTimeout(() => {
       onScanComplete({
         name: "Scanned Product",
-        status: safetyStatus,
+        status: status,
         ingredients: detectedIngredients,
-        expiry: dateStr ? `${dateStr}${daysLeftLabel}` : "No Date Provided",
+        expiry: expiryLabel,
+        date: new Date().toISOString()
       });
-      resetScanner();
+      setScanStep('IDLE');
     }, 2000);
   };
 
   const handleAction = (type) => {
-    if (scanMethod === 'CAMERA') {
-      if (type === 'front') {
-        setCapturedImages(prev => ({ ...prev, front: 'dummy' }));
-        notify("Front label captured", "success");
-      } else if (type === 'back') {
-        setCapturedImages(prev => ({ ...prev, back: 'dummy' }));
-        if (knowExpiry === 'NO') {
-          notify("Ingredients captured", "success");
-          processFinalResults(manualDate);
-        }
-      } else if (type === 'expiry') {
-        processFinalResults(manualDate);
-      }
+    if (scanMethod !== 'CAMERA') return;
+
+    const newImages = { ...capturedImages, [type]: 'dummy' };
+    setCapturedImages(newImages);
+
+    if (type === 'front') {
+      notify("Front label captured", "success");
+    } else if (type === 'back' && knowExpiry === 'NO') {
+      notify("Ingredients captured", "success");
+      processFinalResults(manualDate);
+    } else if (type === 'expiry') {
+      processFinalResults(manualDate);
     }
   };
-  
+
   const handleUpload = (e, type) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    setCapturedImages(prev => ({ ...prev, [type]: file }));
+
     if (type === 'front') {
-      setCapturedImages(prev => ({ ...prev, front: file }));
       notify("Front label uploaded", "success");
-    } else if (type === 'back') {
-      setCapturedImages(prev => ({ ...prev, back: file }));
-      notify("Ingredients captured", "success");
-      if (knowExpiry === 'NO') processFinalResults(manualDate);
-    } else if (type === 'expiry') {
-      processFinalResults(manualDate);
+    } else {
+      notify(`${type === 'back' ? 'Ingredients' : 'Expiry'} captured`, "success");
+      if (type === 'expiry' || (type === 'back' && knowExpiry === 'NO')) {
+        processFinalResults(manualDate);
+      }
     }
   };
 

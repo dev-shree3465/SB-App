@@ -2,7 +2,7 @@ import { Mail, Phone, Lock } from 'lucide-react';
 
 const SignUp = ({ formData, setFormData }) => {
   return (
-    <div className="grid grid-cols-2 gap-x-4 gap-y-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
+    <div className="grid grid-cols-1 min-[471px]:grid-cols-2 gap-x-1 min-[471px]:gap-x-4 gap-y-1 min-[471px]:gap-y-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
 
       <div>
         <label className="text-[10px] font-black text-slate-700 uppercase ml-3 tracking-widest">Email Address</label>

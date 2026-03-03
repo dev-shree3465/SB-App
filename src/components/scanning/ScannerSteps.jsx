@@ -72,4 +72,3 @@ export const ScannerSteps = ({ scanStep, setScanStep, setScanMethod, skinType })
 
   return null;
 };
-

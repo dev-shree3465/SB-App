@@ -1,12 +1,22 @@
 import { useState, useCallback } from 'react';
 
-export const useAuth = (onLogin, notify) => {
-  const [isNewUser, setIsNewUser] = useState(false);
+export const useAuth = (onLogin, notify, initialEmail) => {
+  // 1. Initialize isNewUser: If we have an initialEmail, start in Login mode (false)
+  const [isNewUser, setIsNewUser] = useState(() => {
+    return initialEmail ? false : false; // Defaults to Login if pre-filling
+  });
+
   const [step, setStep] = useState('AUTH');
   const [otpValue, setOtpValue] = useState('');
-  const [formData, setFormData] = useState({
-    name: '', phone: '', email: '', password: '', confirmPassword: ''
-  });
+
+  // 2. Initialize formData: Pre-fill the email immediately if it exists
+  const [formData, setFormData] = useState(() => ({
+    name: '',
+    phone: '',
+    email: initialEmail || '', // Pre-fill logic moved here
+    password: '',
+    confirmPassword: ''
+  }));
 
   const toggleAuthMode = useCallback(() => {
     setIsNewUser(prev => !prev);
@@ -20,25 +30,41 @@ export const useAuth = (onLogin, notify) => {
     }));
   }, []);
 
+  const handleManualToggle = () => {
+    if (!isNewUser) {
+      setFormData(prev => ({
+        name: '',
+        phone: '',
+        email: prev.email,
+        password: '',
+        confirmPassword: ''
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        password: '',
+        confirmPassword: ''
+      }));
+    }
+    toggleAuthMode();
+  };
+
   const handleAuthSubmit = (e) => {
     if (e) {
       e.preventDefault();
       e.stopPropagation();
     }
 
-    // 1. Validation Check
     if (!formData.email || !formData.password) {
       notify("Email & Password required", "error");
       return;
     }
 
-    // 2. Database Check
     const registeredUsers = JSON.parse(localStorage.getItem("skinbloom_registered_users") || "[]");
     const targetEmail = formData.email.trim().toLowerCase();
     const userExists = registeredUsers.find(u => u.email.toLowerCase() === targetEmail);
 
     if (isNewUser) {
-      // SIGN UP LOGIC
       if (userExists) {
         notify("Email already registered!", "error");
         return;
@@ -50,18 +76,14 @@ export const useAuth = (onLogin, notify) => {
       setStep('OTP');
       notify("Security Code Sent", "info");
     } else {
-      // LOGIN LOGIC
       if (!userExists) {
-        // This is where your bug was. Ensure notify is called directly.
         notify("Account not found!", "error");
         return;
       }
-
       if (userExists.password !== formData.password) {
         notify("Incorrect password!", "error");
         return;
       }
-
       onLogin(userExists, false);
     }
   };
@@ -97,7 +119,7 @@ export const useAuth = (onLogin, notify) => {
     setOtpValue,
     formData,
     setFormData,
-    toggleAuthMode,
+    handleManualToggle,
     handleAuthSubmit,
     handleVerifyOTP
   };

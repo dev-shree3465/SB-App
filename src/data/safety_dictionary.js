@@ -16,8 +16,8 @@ export const SAFETY_DATABASE = {
     "Alcohol Denat",
     "Essential Oils",
     "Citric Acid",
-    "Salicylic Acid", // High concentration
-    "Retinol",        // If used during day/sensitive
+    "Salicylic Acid", 
+    "Retinol",
     "Witch Hazel"
   ],
 

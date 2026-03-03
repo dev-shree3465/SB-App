@@ -8,7 +8,7 @@ export const UserIdentityCard = ({ user, profileData, onLogout }) => {
       <div className="flex flex-row items-center gap-4 md:gap-6 relative z-10">
         <div className="w-16 h-16 md:w-20 md:h-20 bg-brand rounded-full flex items-center justify-center shadow-xl shadow-brand/20 border-4 border-white shrink-0">
           <span className="text-3xl text-white font-black uppercase">
-            {user.name ? user.name.charAt(0) : 'G'}
+            {user?.name ? user.name.charAt(0) : 'G'}
           </span>
         </div>
         <div className="flex-1 min-w-0">
