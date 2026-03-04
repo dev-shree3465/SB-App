@@ -1,57 +1,33 @@
-import { useState, useEffect } from 'react';
 import { useScanner } from '../hooks/scanning/useScanner';
 import { ScannerSteps } from '../components/scanning/ScannerSteps';
 import { ExpiryDate } from '../components/scanning/ExpiryDate';
 import { CameraInterface } from '../components/scanning/CameraInterface';
 import { ResultCard } from '../components/scanning/ResultCard';
 
-export const Scanner = ({ onScanComplete, skinType, notify, onResultPopup }) => {
-  const [scanResult, setScanResult] = useState(null);
-
+export const Scanner = ({ core, onScanComplete }) => {
   const {
     scanStep, setScanStep,
     scanMethod, setScanMethod,
     capturedImages,
     manualDate, setManualDate,
     knowExpiry, setKnowExpiry,
-    handleAction, handleUpload, resetScanner
-  } = useScanner(
-    (res) => setScanResult(res),
-    skinType,
-    notify
-  );
-
-  useEffect(() => {
-    onResultPopup(!!scanResult);
-  }, [scanResult, onResultPopup]);
-
-  const handleFinalSave = () => {
-    onScanComplete(scanResult);
-    setScanResult(null);
-    resetScanner();
-    onResultPopup(false);
-  };
-
-  const handleDiscard = () => {
-    setScanResult(null);
-    resetScanner();
-    setScanStep('CHOICE');
-    onResultPopup(false);
-  };
+    scanResult,
+    handleAction, handleUpload, handleFinalSave, handleDiscard, resetScanner
+  } = useScanner(core, onScanComplete);
 
   return (
     <div className="max-w-2xl mx-auto min-h-[400px] relative px-2">
-      {/* 1. Initial Choice & Method Selection */}
+      {/* 1. INITIAL STEPS */}
       {(scanStep === 'CHOICE' || scanStep === 'METHOD_SELECT') && (
         <ScannerSteps
           scanStep={scanStep}
           setScanStep={setScanStep}
           setScanMethod={setScanMethod}
-          skinType={skinType}
+          skinType={core.skinProfile?.type}
         />
       )}
 
-      {/* 2. Quick Log / Expiry Logic */}
+      {/* 2. EXPIRY LOGGING */}
       {scanStep === 'QUICK_LOG_DATE' && (
         <ExpiryDate
           knowExpiry={knowExpiry}
@@ -63,7 +39,7 @@ export const Scanner = ({ onScanComplete, skinType, notify, onResultPopup }) => 
         />
       )}
 
-      {/* 3. Scanning & Processing Interface */}
+      {/* 3. CAPTURE INTERFACE */}
       {(scanStep === 'SCAN_START' || scanStep === 'PROCESSING') && (
         <CameraInterface
           scanStep={scanStep}
@@ -75,7 +51,7 @@ export const Scanner = ({ onScanComplete, skinType, notify, onResultPopup }) => 
         />
       )}
 
-      {/* 4. Result Popup with Lock logic */}
+      {/* 4. RESULT POPUP */}
       {scanResult && (
         <ResultCard
           result={scanResult}

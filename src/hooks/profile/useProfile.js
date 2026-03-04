@@ -1,6 +1,5 @@
 export const useProfile = (core = {}) => {
-  const { 
-    // user, skinProfile, setSkinProfile, setIsNewRegistration, notify 
+  const {
     user = null,
     skinProfile = null,
     setSkinProfile = () => { },
@@ -10,9 +9,34 @@ export const useProfile = (core = {}) => {
 
   const isLoggedIn = !!user;
 
-  // Formatting Logics
-  const displayName = isLoggedIn ? user.name : "Guest User";
-  const displayAge = isLoggedIn ? (core.getDynamicAge()) : "0";
+  // FIXED: Prioritize user.age if it exists (edited in settings) 
+  // then fallback to birthYear calculation.
+  const getAge = () => {
+    if (user?.age) return user.age;
+    if (skinProfile?.birthYear) return new Date().getFullYear() - skinProfile.birthYear;
+    return 0;
+  };
+
+  const handleResetProfile = () => {
+    if (!user) return;
+
+    // 1. Remove ONLY the skin analysis from the global profiles storage
+    const allProfiles = JSON.parse(localStorage.getItem(`skinbloom_all_profiles`) || "{}");
+    delete allProfiles[user.email];
+    localStorage.setItem(`skinbloom_all_profiles`, JSON.stringify(allProfiles));
+
+    // 2. Clear the local skinProfile state
+    setSkinProfile(null);
+
+    // 3. IMPORTANT: Set registration flag to true to trigger the Quiz
+    setIsNewRegistration(true);
+
+    notify("Profile Reset! Retake the quiz.", "info");
+  };
+
+  // Variables for UI display
+  const displayName = isLoggedIn ? (user.name || "User") : "Guest User";
+  const displayAge = isLoggedIn ? getAge() : "0";
   const userId = isLoggedIn && user.id ? `SKIN-${user.id.toString().slice(-4)}` : "Not Available";
   const displayEmail = isLoggedIn ? (user.email || "Email not linked") : "Email not linked";
   const displayPhone = isLoggedIn ? (user.phone || "Phone not linked") : "Phone not linked";
@@ -22,24 +46,6 @@ export const useProfile = (core = {}) => {
     typeValue = skinProfile.type || skinProfile.skinType || "NONE";
   }
 
-  // RESET PROFILE LOGIC (Migrated from Core)
-  const handleResetProfile = () => {
-    if (!user) return;
-
-    // 1. Remove from global storage
-    const allProfiles = JSON.parse(localStorage.getItem(`skinbloom_all_profiles`) || "{}");
-    delete allProfiles[user.email];
-    localStorage.setItem(`skinbloom_all_profiles`, JSON.stringify(allProfiles));
-
-    // 2. Clear current state
-    setSkinProfile(null);
-
-    // 3. TRIGGER RESET BUG FIX: Set isNewRegistration to true so Quiz shows up
-    setIsNewRegistration(true);
-
-    notify("Profile Reset! Please retake the quiz.", "info");
-  };
-
   return {
     displayName,
     displayAge,
@@ -48,6 +54,7 @@ export const useProfile = (core = {}) => {
     displayPhone,
     displaySkinType: typeValue.toUpperCase(),
     isLoggedIn,
-    handleResetProfile // Export this for the UI
+    handleResetProfile,
+    getAge
   };
 };

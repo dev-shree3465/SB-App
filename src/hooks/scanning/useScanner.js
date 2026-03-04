@@ -1,27 +1,35 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { getRandomIngredients, getSafetyProfile } from './scannerUtils';
 
-export const useScanner = (onScanComplete, skinType, notify) => {
+export const useScanner = (core, onScanComplete) => {
+  const { skinProfile, notify, setIsPopupActive } = core;
+
+  // --- INTERNAL SCANNER STATE ---
   const [scanStep, setScanStep] = useState('CHOICE');
   const [scanMethod, setScanMethod] = useState(null);
   const [manualDate, setManualDate] = useState('');
   const [knowExpiry, setKnowExpiry] = useState(null);
+  const [scanResult, setScanResult] = useState(null); // Moved here
   const [capturedImages, setCapturedImages] = useState({
     front: null,
     back: null,
     expiry: null
   });
 
+  // --- UI LOCKING LOGIC ---
+  useEffect(() => {
+    setIsPopupActive(!!scanResult);
+    return () => setIsPopupActive(false);
+  }, [scanResult, setIsPopupActive]);
+
   const processFinalResults = (dateStr) => {
     setScanStep('PROCESSING');
-
-    // Utility logic calling
     const detectedIngredients = getRandomIngredients();
-    const { status, expiryLabel } = getSafetyProfile(detectedIngredients, skinType, dateStr);
+    const { status, expiryLabel } = getSafetyProfile(detectedIngredients, skinProfile?.type, dateStr);
 
     setTimeout(() => {
-      onScanComplete({
-        name: "Scanned Product",
+      setScanResult({
+        name: `Product ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`,
         status: status,
         ingredients: detectedIngredients,
         expiry: expiryLabel,
@@ -33,16 +41,15 @@ export const useScanner = (onScanComplete, skinType, notify) => {
 
   const handleAction = (type) => {
     if (scanMethod !== 'CAMERA') return;
-
-    const newImages = { ...capturedImages, [type]: 'dummy' };
-    setCapturedImages(newImages);
+    setCapturedImages(prev => ({ ...prev, [type]: 'dummy' }));
 
     if (type === 'front') {
-      notify("Front label captured", "success");
-    } else if (type === 'back' && knowExpiry === 'NO') {
-      notify("Ingredients captured", "success");
-      processFinalResults(manualDate);
+      notify?.("Front label captured", "success");
+    } else if (type === 'back') {
+      notify?.("Ingredients captured", "success");
+      if (knowExpiry === 'NO') processFinalResults(manualDate);
     } else if (type === 'expiry') {
+      notify?.("Expiry date captured", "success");
       processFinalResults(manualDate);
     }
   };
@@ -50,17 +57,29 @@ export const useScanner = (onScanComplete, skinType, notify) => {
   const handleUpload = (e, type) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
     setCapturedImages(prev => ({ ...prev, [type]: file }));
 
     if (type === 'front') {
-      notify("Front label uploaded", "success");
-    } else {
-      notify(`${type === 'back' ? 'Ingredients' : 'Expiry'} captured`, "success");
-      if (type === 'expiry' || (type === 'back' && knowExpiry === 'NO')) {
-        processFinalResults(manualDate);
-      }
+      notify?.("Front label uploaded", "success");
+    } else if (type === 'back') {
+      notify?.("Ingredients uploaded", "success");
+      if (knowExpiry === 'NO') processFinalResults(manualDate);
+    } else if (type === 'expiry') {
+      notify?.("Expiry label uploaded", "success");
+      processFinalResults(manualDate);
     }
+  };
+
+  const handleFinalSave = () => {
+    onScanComplete(scanResult);
+    setScanResult(null);
+    resetScanner();
+  };
+
+  const handleDiscard = () => {
+    setScanResult(null);
+    resetScanner();
+    setScanStep('CHOICE');
   };
 
   const resetScanner = () => {
@@ -77,6 +96,7 @@ export const useScanner = (onScanComplete, skinType, notify) => {
     capturedImages,
     manualDate, setManualDate,
     knowExpiry, setKnowExpiry,
-    handleAction, handleUpload, resetScanner
+    scanResult, // Exported for the ResultCard
+    handleAction, handleUpload, handleFinalSave, handleDiscard, resetScanner
   };
 };

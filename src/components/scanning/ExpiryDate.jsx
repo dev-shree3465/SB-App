@@ -23,7 +23,7 @@ export const ExpiryDate = ({ knowExpiry, setKnowExpiry, manualDate, setManualDat
           <div className="animate-in slide-in-from-top-2 w-full">
             <input
               type="date"
-              className="w-full p-5 bg-slate-50 rounded-2xl font-black mb-4 outline-none focus:ring-2 focus:ring-brand"
+              className="w-full p-5 bg-slate-50 rounded-2xl font-black mb-4 outline-none focus:ring-2 focus:ring-brand transition-all uppercase"
               value={manualDate}
               onChange={(e) => setManualDate(e.target.value)}
             />

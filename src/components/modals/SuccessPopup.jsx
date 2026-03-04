@@ -4,7 +4,7 @@ export const SuccessPopup = ({ isOpen, skinType }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[500] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-md">
+    <div className="fixed inset-0 z-[500] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm">
       <div className="bg-white w-full max-w-xs rounded-[2.5rem] p-8 text-center animate-in zoom-in duration-300 shadow-2xl">
         <div className="w-20 h-20 bg-green-50 text-green-500 rounded-3xl flex items-center justify-center mx-auto mb-6">
           <Sparkles size={40} className="animate-bounce" />

@@ -1,5 +1,3 @@
-// src/data/safety_dictionary.js
-
 export const SAFETY_DATABASE = {
   // Harmful or Irritating Ingredients
   harmful: [

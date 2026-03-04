@@ -4,14 +4,15 @@ import { VaultHeader } from '../components/vault/VaultHeader';
 import { useVault } from '../hooks/vault/useVault';
 
 export const Vault = ({ core }) => {
-  const { scannedProducts, setDeleteConfirm } = core;
-
+  // Pass the entire core to the hook so it can handle its own state
   const {
     searchQuery, setSearchQuery,
     statusFilter, setStatusFilter,
     sortOrder, setSortOrder,
     filteredProducts
-  } = useVault(scannedProducts);
+  } = useVault(core);
+
+  const { scannedProducts, setDeleteConfirm } = core;
 
   return (
     <div className="max-w-5xl mx-auto pt-0 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -35,7 +36,8 @@ export const Vault = ({ core }) => {
               products={filteredProducts}
               onDelete={(idx) => {
                 const targetProduct = filteredProducts[idx];
-                const actualIndex = scannedProducts.findIndex(p => p.id === targetProduct.id || p.name === targetProduct.name);
+                // Finding actual index for the delete modal confirmation
+                const actualIndex = scannedProducts.findIndex(p => p.date === targetProduct.date);
                 setDeleteConfirm({ idx: actualIndex, name: targetProduct.name });
               }}
             />

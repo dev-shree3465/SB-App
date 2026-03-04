@@ -49,18 +49,18 @@ export const ScannerSteps = ({ scanStep, setScanStep, setScanMethod, skinType })
     return (
       <div className="space-y-3 animate-in zoom-in-95 bg-white p-6 sm:p-8 rounded-[2rem] sm:rounded-[3rem] mx-2">
         <h2 className="text-lg sm:text-xl font-black text-slate-800 uppercase tracking-tighter italic">Choose Method</h2>
-        <p className="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4 sm:mb-8">Live camera or gallery</p>
+        <p className="text-[10px] sm:text-[12px] font-bold text-slate-400 uppercase tracking-widest mb-4 sm:mb-8">Live camera or gallery</p>
 
         <button onClick={() => { setScanMethod('CAMERA'); setScanStep('SCAN_START'); }} className="w-full p-4 sm:p-6 bg-white border-2 border-slate-300 rounded-2xl sm:rounded-3xl flex items-center gap-4 text-slate-600 hover:border-brand transition-all">
           <Camera size={18} className='text-brand' />
-          <span className="font-black uppercase text-[10px] sm:text-xs tracking-widest">
+          <span className="font-black uppercase text-[11px] sm:text-xs tracking-widest">
             Live Camera
           </span>
         </button>
 
         <button onClick={() => { setScanMethod('UPLOAD'); setScanStep('SCAN_START'); }} className="w-full p-4 sm:p-6 bg-white border-2 border-slate-300 rounded-2xl sm:rounded-3xl flex items-center gap-4 text-slate-600 hover:border-brand transition-all">
           <ImageIcon size={18} className='text-brand' />
-          <span className="font-black uppercase text-[10px] sm:text-xs tracking-widest">
+          <span className="font-black uppercase text-[11px] sm:text-xs tracking-widest">
             Gallery Upload
           </span>
         </button>

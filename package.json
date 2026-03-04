@@ -13,7 +13,7 @@
     "@tailwindcss/vite": "^4.2.0",
     "face-api.js": "^0.22.2",
     "firebase": "^12.9.0",
-    "framer-motion": "^12.34.3",
+    "framer-motion": "^12.34.5",
     "lucide-react": "^0.575.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",

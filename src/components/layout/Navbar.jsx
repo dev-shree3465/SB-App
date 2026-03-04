@@ -1,6 +1,7 @@
 import { ShieldCheck, LogIn } from 'lucide-react';
+import { NotificationBell } from './NotificationBell'; // Import the new component
 
-export const Navbar = ({ user, activeTab, setActiveTab, onLoginClick }) => {
+export const Navbar = ({ user, activeTab, setActiveTab, onLoginClick, scannedProducts = [] }) => {
   return (
     <header className="fixed top-0 left-0 w-full bg-white/80 backdrop-blur-md border-b border-slate-200 z-100">
       <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
@@ -15,12 +16,12 @@ export const Navbar = ({ user, activeTab, setActiveTab, onLoginClick }) => {
           </span>
         </div>
 
-        {/* Desktop Nav Links */}
+        {/* Desktop Nav */}
         <nav className="hidden md:flex items-center gap-1">
           {['DASHBOARD', 'SCAN', 'VAULT', 'PROFILE'].map((id) => (
             <button
               key={id}
-              onClick={() => setActiveTab(id)}
+              onClick={() => (id === 'DASHBOARD' || user) ? setActiveTab(id) : onLoginClick()}
               className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeTab === id ? 'bg-brand/20 text-brand' : 'text-slate-400 hover:text-slate-600'
                 }`}
             >
@@ -30,13 +31,24 @@ export const Navbar = ({ user, activeTab, setActiveTab, onLoginClick }) => {
         </nav>
 
         {/* Auth Section */}
-        <div className="flex items-center">
+        <div className="flex items-center gap-3">
           {user ? (
-            <button onClick={() => setActiveTab('PROFILE')} className="relative">
-              <div className="w-9 h-9 md:w-10 md:h-10 bg-brand/10 rounded-full flex items-center justify-center border border-brand/20">
-                <span className="text-base font-black text-brand uppercase">{user.name?.charAt(0)}</span>
-              </div>
-            </button>
+            <div className="flex items-center gap-2">
+              {/* Notification Bell Component */}
+              <NotificationBell
+                user={user}
+                scannedProducts={scannedProducts}
+                setActiveTab={setActiveTab}
+              />
+
+              <button onClick={() => setActiveTab('PROFILE')} className="relative">
+                <div className="w-9 h-9 md:w-10 md:h-10 bg-brand/10 rounded-full flex items-center justify-center border border-brand/20">
+                  <span className="text-base font-black text-brand uppercase">
+                    {user.name?.charAt(0)}
+                  </span>
+                </div>
+              </button>
+            </div>
           ) : (
             <button
               onClick={onLoginClick}

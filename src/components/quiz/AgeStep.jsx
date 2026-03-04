@@ -8,7 +8,6 @@ export const AgeStep = ({ birthDate, setBirthDate, onSubmit, validateAndSetAge }
   const handleAgeCheck = (e) => {
     e.preventDefault();
 
-    // Call the centralized logic in the hook
     const age = validateAndSetAge(birthDate);
 
     if (age !== null) {
@@ -20,7 +19,7 @@ export const AgeStep = ({ birthDate, setBirthDate, onSubmit, validateAndSetAge }
 
   if (isConfirming) {
     return (
-      <div className="py-12 text-center animate-in zoom-in duration-500">
+      <div className="py-6 text-center animate-in zoom-in duration-500">
         <div className="w-20 h-20 bg-green-50 text-green-500 rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-sm">
           <Sparkles size={40} className="animate-pulse" />
         </div>
@@ -38,8 +37,8 @@ export const AgeStep = ({ birthDate, setBirthDate, onSubmit, validateAndSetAge }
   }
 
   return (
-    <div className="py-2 text-center animate-in fade-in slide-in-from-bottom-4">
-      <div className="w-16 h-16 bg-slate-50 text-slate-900 rounded-2xl flex items-center justify-center mx-auto mb-6 border border-slate-100 shadow-sm">
+    <div className=" text-center animate-in fade-in slide-in-from-bottom-4">
+      <div className="w-16 h-10 bg-slate-50 text-slate-900 rounded-2xl flex items-center justify-center mx-auto mb-6 border border-slate-100 shadow-sm">
         <Calendar size={32} />
       </div>
       <h2 className="text-2xl font-black text-slate-800 uppercase tracking-tight mb-2">When were you born?</h2>
