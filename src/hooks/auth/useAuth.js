@@ -18,11 +18,8 @@ export const useAuth = (core, initialEmail) => {
   } = core;
 
   const [isNewUser, setIsNewUser] = useState(false);
-
   const [step, setStep] = useState(otpPurpose === "2FA_TOGGLE" ? 'OTP' : 'AUTH');
-
   const [otpValue, setOtpValue] = useState('');
-
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
@@ -57,25 +54,34 @@ export const useAuth = (core, initialEmail) => {
 
   const handleAuthComplete = (userData, isSignup = false) => {
     const allProfiles = JSON.parse(localStorage.getItem(`skinbloom_all_profiles`) || "{}");
-    const existingProfile = allProfiles[userData.email];
+    const allProducts = JSON.parse(localStorage.getItem(`skinbloom_all_products`) || "{}");
+
+    const emailKey = userData.email.toLowerCase();
+    const existingProfile = allProfiles[emailKey];
+    const existingProducts = allProducts[emailKey];
 
     if (isSignup) {
       setPendingUser(userData);
       setRegisteredEmail(userData.email);
       setIsNewRegistration(true);
       setShowAuthModal(false);
-      notify("Verification successful! Complete the quiz to finish signup.", "success");
+      notify("Verification successful!", "success");
     } else {
       setUser(userData);
       setShowAuthModal(false);
 
       if (existingProfile) {
         setSkinProfile(existingProfile);
-        setIsNewRegistration(false);
-        notify(`Welcome back, ${userData.name}!`, "success");
-      } else {
-        setIsNewRegistration(true);
       }
+
+      if (existingProducts) {
+        setScannedProducts(existingProducts);
+      } else {
+        setScannedProducts([]);
+      }
+
+      setIsNewRegistration(false);
+      notify(`Welcome back, ${userData.name}!`, "success");
     }
   };
 
@@ -176,13 +182,24 @@ export const useAuth = (core, initialEmail) => {
       setUser(null);
       setRegisteredEmail("");
       setIsNewRegistration(true);
+      notify("All data cleared.", "info");
     } else {
+      if (user && user.email) {
+        const allProducts = JSON.parse(localStorage.getItem(`skinbloom_all_products`) || "{}");
+        allProducts[user.email.toLowerCase()] = core.scannedProducts;
+        localStorage.setItem(`skinbloom_all_products`, JSON.stringify(allProducts));
+      }
+
       setUser(null);
+      setSkinProfile(null);
+      setScannedProducts([]);
+
       setIsNewRegistration(false);
+      notify("Logged out.", "info");
     }
+
     setActiveTab('DASHBOARD');
     setShowLogoutConfirm(false);
-    notify(wipeAll ? "All data cleared." : "Logged out.", "info");
   };
 
   return {

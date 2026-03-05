@@ -47,7 +47,7 @@ export const useQuiz = (core, initialAge) => {
 
   const handleSummaryBack = () => {
     setShowSummary(false);
-    setCurrentStep(6); // Go back to the 7th question
+    setCurrentStep(6);
   };
 
   const confirmFinalResults = () => {
